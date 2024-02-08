@@ -24,7 +24,8 @@
                 <a href="http://localhost:8080/api/clientes/export" class="btn btn-secondary">Download CSV File</a>
               </div>
               <div class="input-group mb-3">
-                <input type="text" class="form-control" placeholder="Enter shared key" aria-label="Enter shared key" aria-describedby="button-addon2" [(ngModel)]="sharedKey">
+                <input type="text" class="form-control" placeholder="Enter shared key" aria-label="Enter shared key" aria-describedby="button-addon2" [(ngModel)]="sharedKey" 
+                onkeydown="return /[a-z, ]/i.test(event.key)">
                 <button class="btn btn-outline-secondary" (click)="searchClients()" type="button" id="button-addon2">Button</button>
               </div>
               
