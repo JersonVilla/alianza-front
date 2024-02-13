@@ -4,7 +4,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 import swal from 'sweetalert2';
 import { Router } from '@angular/router';
-import { Cliente } from '../interfaces/cliente';
+import { Cliente, ClienteResponse } from '../interfaces/cliente.interface';
 import { HttpApi } from '../models/http-api';
 
 @Injectable()
@@ -14,58 +14,64 @@ export class ClienteService {
 
   constructor(private http: HttpClient, private router: Router) { }
 
-  getClientes(): Observable<Cliente[]> {Cliente
-    //return of(CLIENTES);
-    return this.http.get(`${HttpApi.HOST_BASE}/${HttpApi.GET_CLIENTES}`).pipe(
-      map(response => response as Cliente[])
-    );
+  getClientes(): Observable<Cliente[]> {
+    return this.http.get<ClienteResponse>(`${HttpApi.HOST_BASE}/${HttpApi.GET_CLIENTES}`).pipe(
+      map(response => {
+        if (response.httpStatus === "OK") {
+          return response.data.clientes;
+        } else {
+          throw new Error("Error en la solicitud");
+        }
+    })
+    )
   }
 
   getCliente(id:number): Observable<Cliente>{
-    return this.http.get<Cliente>(`${HttpApi.HOST_BASE}/${HttpApi.GET_CLIENTES}/${id}`).pipe(
-      catchError(e => {
+    return this.http.get<ClienteResponse>(`${HttpApi.HOST_BASE}/${HttpApi.GET_CLIENTES}/${id}`).pipe(
+      map(response => {
+        if (response.httpStatus !== "OK") {
+          this.router.navigate(['/clientes']);
+          throw new Error("Error en la solicitud");
+        }
+        return response.data.clientes[0];
+    })
+    )
+  }
+
+  create(cliente: Cliente) : Observable<void> {
+    return this.http.post<ClienteResponse>(`${HttpApi.HOST_BASE}/${HttpApi.GET_CLIENTES}`, cliente, {headers: this.httpHeaders}).pipe(
+      map(response => {
+        if (response.httpStatus !== "OK") {
+          throw new Error("Error en la solicitud");
+        }
         this.router.navigate(['/clientes']);
-        console.error(e.error.mensaje);
-        swal.fire('Error al editar', e.error.mensaje, 'error');
-        return throwError(() => e);
-      })
-    );
+        return;
+    })
+    )
   }
 
-  create(cliente: Cliente) : Observable<Cliente> {
-    return this.http.post(`${HttpApi.HOST_BASE}/${HttpApi.GET_CLIENTES}`, cliente, {headers: this.httpHeaders}).pipe(
-      map((response: any) => response.cliente as Cliente),
-      catchError(e => {
-
-        /*if (e.status == 400) {
-          return throwError(() => e);
-        }*/
-
-        console.error(e.error.mensaje);
-        swal.fire(e.error.mensaje, e.error.error, 'error');
-        return throwError(() => e);
-      })
-    );
-  }
-
-  update(cliente: Cliente): Observable<any>{
-    return this.http.put<any>(`${HttpApi.HOST_BASE}/${HttpApi.GET_CLIENTES}/${cliente.id}`, cliente, {headers: this.httpHeaders}).pipe(
-      catchError(e => {
-
-        /*if (e.status == 400) {
-          return throwError(() => e);
-        }*/
-
-        console.error(e.error.mensaje);
-        swal.fire(e.error.mensaje, e.error.error, 'error');
-        return throwError(() => e);
-      })
-    );
+  update(cliente: Cliente): Observable<void>{
+    return this.http.put<ClienteResponse>(`${HttpApi.HOST_BASE}/${HttpApi.GET_CLIENTES}/${cliente.id}`, cliente, {headers: this.httpHeaders}).pipe(
+      map(response => {
+        if (response.httpStatus !== "OK") {
+          throw new Error("Error en la solicitud");
+        }
+        this.router.navigate(['/clientes']);
+        return;
+    })
+    )
   }
 
   searchClientsSharedKey(sharedKey: string): Observable<Cliente[]> {
     const params = { sharedKey: sharedKey };
-    return this.http.get<Cliente[]>(`${HttpApi.HOST_BASE}/${HttpApi.GET_CLIENTES}/${HttpApi.GET_FILTRO}`, { params });
+    return this.http.get<ClienteResponse>(`${HttpApi.HOST_BASE}/${HttpApi.GET_CLIENTES}/${HttpApi.GET_FILTRO}`, { params }).pipe(
+      map(response => {
+        if (response.httpStatus !== "OK") {
+          throw new Error("Error en la solicitud");
+        }
+        return response.data.clientes;
+    })
+    );
   }
 
 }
